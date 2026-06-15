@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tata Steel — Maintenance Training Portal</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+
+<!-- TOP NAVIGATION BAR -->
+<header class="topbar" id="topbar">
+  <div class="topbar-left">
+    <button class="hamburger" id="hamburgerBtn" aria-label="Toggle sidebar">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="brand">
+      <div class="brand-logo">
+        <i class="fa-solid fa-industry"></i>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">TATA STEEL</span>
+        <span class="brand-sub">Maintenance Training Portal</span>
+      </div>
+    </div>
+  </div>
+
+  <nav class="topnav" id="topnav">
+    <ul class="topnav-list">
+      <li class="topnav-item">
+        <a class="topnav-link" href="#" data-page="dashboard">
+          <i class="fa-solid fa-gauge-high"></i> Dashboard
+        </a>
+      </li>
+
+      <!-- Maintenance Dropdown -->
+      <li class="topnav-item has-dropdown">
+        <a class="topnav-link dropdown-trigger" href="#">
+          <i class="fa-solid fa-wrench"></i> Maintenance <i class="fa-solid fa-chevron-down arrow-icon"></i>
+        </a>
+        <div class="mega-dropdown">
+          <div class="mega-col">
+            <div class="mega-heading"><i class="fa-solid fa-gear"></i> Mechanical</div>
+            <a class="mega-link" href="#" data-page="mechanical"><i class="fa-solid fa-cog"></i> Mechanical Division</a>
+          </div>
+          <div class="mega-col">
+            <div class="mega-heading"><i class="fa-solid fa-bolt"></i> Electrical (EEI)</div>
+            <a class="mega-link" href="#" data-page="eei-epc"><i class="fa-solid fa-microchip"></i> EPC</a>
+            <a class="mega-link" href="#" data-page="eei-edr"><i class="fa-solid fa-chart-line"></i> EDR</a>
+            <a class="mega-link" href="#" data-page="eei-egs"><i class="fa-solid fa-shield-halved"></i> EGS</a>
+          </div>
+          <div class="mega-col">
+            <div class="mega-heading"><i class="fa-solid fa-sitemap"></i> EPC Sub-divisions</div>
+            <a class="mega-link" href="#" data-page="plc-pre"><i class="fa-solid fa-circle-nodes"></i> PLC Pre-EMP</a>
+            <a class="mega-link" href="#" data-page="plc-post"><i class="fa-solid fa-circle-nodes"></i> PLC Post-EMP</a>
+            <a class="mega-link" href="#" data-page="instrumentation"><i class="fa-solid fa-temperature-half"></i> Instrumentation</a>
+            <a class="mega-link" href="#" data-page="electronics"><i class="fa-solid fa-radio"></i> Electronics & Comm.</a>
+          </div>
+          <div class="mega-col">
+            <div class="mega-heading"><i class="fa-solid fa-table-cells"></i> Quick Modules</div>
+            <a class="mega-link" href="#" data-page="SCEP21"><i class="fa-solid fa-cube"></i> SCEP21 (Rockwell)</a>
+            <a class="mega-link" href="#" data-page="SCEP22"><i class="fa-solid fa-cube"></i> SCEP22 (Siemens)</a>
+            <a class="mega-link" href="#" data-page="SCEP23"><i class="fa-solid fa-cube"></i> SCEP23 (ABB)</a>
+            <a class="mega-link" href="#" data-page="SCEP32"><i class="fa-solid fa-cube"></i> SCEP32 (Data Comm.)</a>
+            <a class="mega-link" href="#" data-page="SEPLC1"><i class="fa-solid fa-diagram-project"></i> SEPLC1</a>
+            <a class="mega-link" href="#" data-page="SEPLC2"><i class="fa-solid fa-diagram-project"></i> SEPLC2</a>
+            <a class="mega-link" href="#" data-page="SEPLC3"><i class="fa-solid fa-diagram-project"></i> SEPLC3</a>
+            <a class="mega-link" href="#" data-page="SEABB1"><i class="fa-solid fa-diagram-project"></i> SEABB1</a>
+            <a class="mega-link" href="#" data-page="SEABB2"><i class="fa-solid fa-diagram-project"></i> SEABB2</a>
+            <a class="mega-link" href="#" data-page="SEABB3"><i class="fa-solid fa-diagram-project"></i> SEABB3</a>
+            <a class="mega-link" href="#" data-page="E4"><i class="fa-solid fa-e"></i> E4</a>
+            <a class="mega-link" href="#" data-page="request"><i class="fa-solid fa-paper-plane"></i> Request</a>
+          </div>
+        </div>
+      </li>
+
+      <li class="topnav-item">
+        <a class="topnav-link" href="#" data-page="dashboard">
+          <i class="fa-solid fa-circle-info"></i> Help
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="topbar-right">
+    <div class="search-wrap" id="searchWrap">
+      <i class="fa-solid fa-magnifying-glass search-icon"></i>
+      <input class="search-input" id="searchInput" type="text" placeholder="Search modules… (e.g. SEPLC1, SCEP21)" autocomplete="off" />
+      <div class="search-results" id="searchResults"></div>
+    </div>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+      <i class="fa-solid fa-moon" id="themeIcon"></i>
+    </button>
+    <div class="user-avatar">
+      <i class="fa-solid fa-user-hard-hat"></i>
+    </div>
+  </div>
+</header>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-inner">
+    <div class="sidebar-title">Navigation</div>
+    <nav class="tree-nav" id="treeNav">
+
+      <!-- Dashboard -->
+      <div class="tree-item">
+        <div class="tree-label tree-leaf" data-page="dashboard">
+          <i class="fa-solid fa-gauge-high tree-icon"></i> Dashboard
+        </div>
+      </div>
+
+      <!-- Maintenance Root -->
+      <div class="tree-item">
+        <div class="tree-label tree-parent" data-key="maintenance">
+          <i class="fa-solid fa-chevron-right tree-arrow"></i>
+          <i class="fa-solid fa-wrench tree-icon"></i> Maintenance
+        </div>
+        <div class="tree-children" id="maintenance">
+
+          <!-- Mechanical -->
+          <div class="tree-item">
+            <div class="tree-label tree-leaf" data-page="mechanical">
+              <i class="fa-solid fa-gear tree-icon"></i> Mechanical
+            </div>
+          </div>
+
+          <!-- Electrical EEI -->
+          <div class="tree-item">
+            <div class="tree-label tree-parent" data-key="eei">
+              <i class="fa-solid fa-chevron-right tree-arrow"></i>
+              <i class="fa-solid fa-bolt tree-icon"></i> Electrical (EEI)
+            </div>
+            <div class="tree-children" id="eei">
+
+              <!-- EPC -->
+              <div class="tree-item">
+                <div class="tree-label tree-parent" data-key="epc">
+                  <i class="fa-solid fa-chevron-right tree-arrow"></i>
+                  <i class="fa-solid fa-microchip tree-icon"></i> EPC
+                </div>
+                <div class="tree-children" id="epc">
+
+                  <!-- PLC -->
+                  <div class="tree-item">
+                    <div class="tree-label tree-parent" data-key="plc">
+                      <i class="fa-solid fa-chevron-right tree-arrow"></i>
+                      <i class="fa-solid fa-circle-nodes tree-icon"></i> PLC
+                    </div>
+                    <div class="tree-children" id="plc">
+                      <div class="tree-item">
+                        <div class="tree-label tree-leaf" data-page="plc-pre">
+                          <i class="fa-solid fa-play tree-icon"></i> Pre-EMP
+                        </div>
+                      </div>
+                      <!-- Post-EMP -->
+                      <div class="tree-item">
+                        <div class="tree-label tree-parent" data-key="plc-post-group">
+                          <i class="fa-solid fa-chevron-right tree-arrow"></i>
+                          <i class="fa-solid fa-forward tree-icon"></i> Post-EMP
+                        </div>
+                        <div class="tree-children" id="plc-post-group">
+
+                          <!-- ECBS -->
+                          <div class="tree-item">
+                            <div class="tree-label tree-parent" data-key="ecbs">
+                              <i class="fa-solid fa-chevron-right tree-arrow"></i>
+                              <i class="fa-solid fa-cubes tree-icon"></i> ECBS
+                            </div>
+                            <div class="tree-children" id="ecbs">
+                              <div class="tree-item"><div class="tree-label tree-leaf module-leaf" data-page="SCEP21"><i class="fa-solid fa-cube tree-icon"></i> SCEP21 <span class="badge">Rockwell</span></div></div>
+                              <div class="tree-item"><div class="tree-label tree-leaf module-leaf" data-page="SCEP22"><i class="fa-solid fa-cube tree-icon"></i> SCEP22 <span class="badge">Siemens</span></div></div>
+                              <div class="tree-item"><div class="tree-label tree-leaf module-leaf" data-page="SCEP23"><i class="fa-solid fa-cube tree-icon"></i> SCEP23 <span class="badge">ABB</span></div></div>
+                              <div class="tree-item"><div class="tree-label tree-leaf module-leaf" data-page="SCEP32"><i class="fa-solid fa-cube tree-icon"></i> SCEP32 <span class="badge">Data Comm.</span></div></div>
+                            </div>
+                          </div>
+
+                          <!-- SOE -->
+                          <div class="tree-item">
+                            <div class="tree-label tree-parent" data-key="soe">
+                              <i class="fa-solid fa-chevron-right tree-arrow"></i>
+                              <i class="fa-solid fa-list-check tree-icon"></i> SOE
+                            </div>
+                            <div class="tree-children" id="soe">
+                              <!-- Siemens SOE -->
+                              <div class="tree-item">
+                                <div class="tree-label tree-parent" data-key="soe-siemens">
+                                  <i class="fa-solid fa-chevron-right tree-arrow"></i>
+                                  <i class="fa-solid fa-s tree-icon"></i> Siemens
+                                </div>
+                                <div class="tree-children" id="soe-siemens">
+                                  <div class="tree-item"><div class="tree-label tree-leaf module-leaf" data-page="SEPLC1"><i class="fa-solid fa-diagram-project tree-icon"></i> SEPLC1</div></div>
+                                  <div class="tree-item"><div class="tree-label tree-leaf module-leaf" data-page="SEPLC2"><i class="fa-solid fa-diagram-project tree-icon"></i> SEPLC2</div></div>
+                                  <div class="tree-item"><div class="tree-label tree-leaf module-leaf" data-page="SEPLC3"><i class="fa-solid fa-diagram-project tree-icon"></i> SEPLC3</div></div>
+                                </div>
+                              </div>
+                              <!-- ABB SOE -->
+                              <div class="tree-item">
+                                <div class="tree-label tree-parent" data-key="soe-abb">
+                                  <i class="fa-solid fa-chevron-right tree-arrow"></i>
+                                  <i class="fa-solid fa-a tree-icon"></i> ABB
+                                </div>
+                                <div class="tree-children" id="soe-abb">
+                                  <div class="tree-item"><div class="tree-label tree-leaf module-leaf" data-page="SEABB1"><i class="fa-solid fa-diagram-project tree-icon"></i> SEABB1</div></div>
+                                  <div class="tree-item"><div class="tree-label tree-leaf module-leaf" data-page="SEABB2"><i class="fa-solid fa-diagram-project tree-icon"></i> SEABB2</div></div>
+                                  <div class="tree-item"><div class="tree-label tree-leaf module-leaf" data-page="SEABB3"><i class="fa-solid fa-diagram-project tree-icon"></i> SEABB3</div></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- E4 -->
+                          <div class="tree-item"><div class="tree-label tree-leaf module-leaf" data-page="E4"><i class="fa-solid fa-e tree-icon"></i> E4</div></div>
+                          <!-- Request -->
+                          <div class="tree-item"><div class="tree-label tree-leaf module-leaf" data-page="request"><i class="fa-solid fa-paper-plane tree-icon"></i> Request</div></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div><!-- /PLC -->
+
+                  <!-- Instrumentation -->
+                  <div class="tree-item">
+                    <div class="tree-label tree-leaf" data-page="instrumentation">
+                      <i class="fa-solid fa-temperature-half tree-icon"></i> Instrumentation
+                    </div>
+                  </div>
+
+                  <!-- Electronics & Communication -->
+                  <div class="tree-item">
+                    <div class="tree-label tree-leaf" data-page="electronics">
+                      <i class="fa-solid fa-radio tree-icon"></i> Electronics &amp; Communication
+                    </div>
+                  </div>
+
+                </div>
+              </div><!-- /EPC -->
+
+              <!-- EDR -->
+              <div class="tree-item">
+                <div class="tree-label tree-leaf" data-page="eei-edr">
+                  <i class="fa-solid fa-chart-line tree-icon"></i> EDR
+                </div>
+              </div>
+
+              <!-- EGS -->
+              <div class="tree-item">
+                <div class="tree-label tree-leaf" data-page="eei-egs">
+                  <i class="fa-solid fa-shield-halved tree-icon"></i> EGS
+                </div>
+              </div>
+
+            </div>
+          </div><!-- /EEI -->
+
+        </div>
+      </div><!-- /Maintenance -->
+
+    </nav>
+  </div>
+</aside>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- MAIN CONTENT -->
+<main class="main-content" id="mainContent">
+
+  <!-- BREADCRUMB -->
+  <div class="breadcrumb-bar" id="breadcrumbBar">
+    <nav class="breadcrumb" id="breadcrumb" aria-label="Breadcrumb"></nav>
+  </div>
+
+  <!-- PAGE CONTAINER -->
+  <div class="page-container" id="pageContainer">
+
+    <!-- ===== DASHBOARD PAGE ===== -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-hero">
+        <div class="hero-content">
+          <div class="hero-eyebrow"><i class="fa-solid fa-industry"></i> Internal Training System</div>
+          <h1 class="hero-title">Maintenance Training Portal</h1>
+          <p class="hero-sub">Structured learning for Mechanical &amp; Electrical (EEI) maintenance engineers. Access PLC, SOE, ECBS, E4, and all training modules from one place.</p>
+          <div class="hero-actions">
+            <button class="btn-primary" data-page="plc-post-group">
+              <i class="fa-solid fa-play"></i> Start Training
+            </button>
+            <button class="btn-outline" data-page="SCEP21">
+              <i class="fa-solid fa-cube"></i> Browse Modules
+            </button>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="hero-rings">
+            <div class="ring r1"></div>
+            <div class="ring r2"></div>
+            <div class="ring r3"></div>
+            <div class="ring-center"><i class="fa-solid fa-industry"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="--c:#3b82f6"><i class="fa-solid fa-layer-group"></i></div>
+          <div class="stat-body">
+            <div class="stat-number" data-target="12">0</div>
+            <div class="stat-label">Training Modules</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="--c:#f59e0b"><i class="fa-solid fa-users"></i></div>
+          <div class="stat-body">
+            <div class="stat-number" data-target="284">0</div>
+            <div class="stat-label">Active Trainees</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="--c:#10b981"><i class="fa-solid fa-circle-check"></i></div>
+          <div class="stat-body">
+            <div class="stat-number" data-target="73">0</div>
+            <div class="stat-label">Completion Rate %</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="--c:#8b5cf6"><i class="fa-solid fa-star"></i></div>
+          <div class="stat-body">
+            <div class="stat-number" data-target="4">0</div>
+            <div class="stat-label">Certifications Issued (×100)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Access -->
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title"><i class="fa-solid fa-bolt"></i> Quick Access</h2>
+          <span class="section-sub">Jump directly to any module</span>
+        </div>
+        <div class="qa-grid">
+          <div class="qa-card" data-page="SCEP21">
+            <div class="qa-icon" style="--c:#3b82f6"><i class="fa-solid fa-cube"></i></div>
+            <div class="qa-name">SCEP21</div>
+            <div class="qa-desc">Rockwell PLC · ECBS</div>
+          </div>
+          <div class="qa-card" data-page="SCEP22">
+            <div class="qa-icon" style="--c:#f59e0b"><i class="fa-solid fa-cube"></i></div>
+            <div class="qa-name">SCEP22</div>
+            <div class="qa-desc">Siemens PLC · ECBS</div>
+          </div>
+          <div class="qa-card" data-page="SCEP23">
+            <div class="qa-icon" style="--c:#10b981"><i class="fa-solid fa-cube"></i></div>
+            <div class="qa-name">SCEP23</div>
+            <div class="qa-desc">ABB PLC · ECBS</div>
+          </div>
+          <div class="qa-card" data-page="SCEP32">
+            <div class="qa-icon" style="--c:#8b5cf6"><i class="fa-solid fa-cube"></i></div>
+            <div class="qa-name">SCEP32</div>
+            <div class="qa-desc">Data Communication · ECBS</div>
+          </div>
+          <div class="qa-card" data-page="SEPLC1">
+            <div class="qa-icon" style="--c:#ef4444"><i class="fa-solid fa-diagram-project"></i></div>
+            <div class="qa-name">SEPLC1</div>
+            <div class="qa-desc">SOE Siemens · Level 1</div>
+          </div>
+          <div class="qa-card" data-page="SEPLC2">
+            <div class="qa-icon" style="--c:#06b6d4"><i class="fa-solid fa-diagram-project"></i></div>
+            <div class="qa-name">SEPLC2</div>
+            <div class="qa-desc">SOE Siemens · Level 2</div>
+          </div>
+          <div class="qa-card" data-page="SEPLC3">
+            <div class="qa-icon" style="--c:#f97316"><i class="fa-solid fa-diagram-project"></i></div>
+            <div class="qa-name">SEPLC3</div>
+            <div class="qa-desc">SOE Siemens · Level 3</div>
+          </div>
+          <div class="qa-card" data-page="SEABB1">
+            <div class="qa-icon" style="--c:#14b8a6"><i class="fa-solid fa-diagram-project"></i></div>
+            <div class="qa-name">SEABB1</div>
+            <div class="qa-desc">SOE ABB · Level 1</div>
+          </div>
+          <div class="qa-card" data-page="SEABB2">
+            <div class="qa-icon" style="--c:#a855f7"><i class="fa-solid fa-diagram-project"></i></div>
+            <div class="qa-name">SEABB2</div>
+            <div class="qa-desc">SOE ABB · Level 2</div>
+          </div>
+          <div class="qa-card" data-page="SEABB3">
+            <div class="qa-icon" style="--c:#ec4899"><i class="fa-solid fa-diagram-project"></i></div>
+            <div class="qa-name">SEABB3</div>
+            <div class="qa-desc">SOE ABB · Level 3</div>
+          </div>
+          <div class="qa-card" data-page="E4">
+            <div class="qa-icon" style="--c:#84cc16"><i class="fa-solid fa-e"></i></div>
+            <div class="qa-name">E4</div>
+            <div class="qa-desc">Post-EMP · Advanced</div>
+          </div>
+          <div class="qa-card" data-page="request">
+            <div class="qa-icon" style="--c:#f59e0b"><i class="fa-solid fa-paper-plane"></i></div>
+            <div class="qa-name">Request</div>
+            <div class="qa-desc">Training Request Form</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recently Visited -->
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title"><i class="fa-solid fa-clock-rotate-left"></i> Recently Visited</h2>
+        </div>
+        <div class="recent-list" id="recentList">
+          <div class="recent-empty"><i class="fa-solid fa-folder-open"></i> No recent modules yet. Start exploring!</div>
+        </div>
+      </section>
+
+    </div><!-- /dashboard -->
+
+    <!-- ===== SECTION PAGE (non-leaf nodes) ===== -->
+    <div class="page" id="page-section">
+      <div class="section-hero">
+        <div class="section-hero-icon" id="sectionHeroIcon"></div>
+        <div>
+          <h1 class="section-hero-title" id="sectionHeroTitle"></h1>
+          <p class="section-hero-desc" id="sectionHeroDesc"></p>
+        </div>
+      </div>
+      <div class="children-grid" id="childrenGrid"></div>
+    </div>
+
+    <!-- ===== MODULE PAGE (leaf training modules) ===== -->
+    <div class="page" id="page-module">
+      <div class="module-header">
+        <div class="module-header-icon" id="moduleIcon"></div>
+        <div>
+          <div class="module-header-tag" id="moduleTag"></div>
+          <h1 class="module-header-title" id="moduleTitle"></h1>
+          <p class="module-header-desc" id="moduleDesc"></p>
+        </div>
+      </div>
+
+      <div class="training-grid" id="trainingGrid"></div>
+    </div>
+
+  </div><!-- /pageContainer -->
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
