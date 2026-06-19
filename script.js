@@ -1,785 +1,855 @@
-/* ===================================================
-   TATA STEEL — MAINTENANCE TRAINING PORTAL
-   script.js  |  Navigation, Search, Pages, Animations
-   =================================================== */
+/**
+ * ═══════════════════════════════════════════════════════════
+ * TATA STEEL – MAINTENANCE TRAINING PORTAL
+ * script.js
+ * ═══════════════════════════════════════════════════════════
+ *
+ * ──────────────────────────────────────────────────────────
+ * SUPABASE SETUP (REQUIRED FOR FILE STORAGE)
+ * ──────────────────────────────────────────────────────────
+ * 1. Go to https://supabase.com and create a FREE account.
+ * 2. Create a new project.
+ * 3. In your project dashboard go to:
+ *      Settings → API
+ * 4. Copy:
+ *      • Project URL  →  paste below as SUPABASE_URL
+ *      • anon/public key  →  paste below as SUPABASE_ANON_KEY
+ * 5. In Supabase go to:
+ *      Storage → Create a new bucket
+ *      Name it exactly:  training-files
+ *      Make it PUBLIC (toggle ON)
+ * 6. In Supabase go to:
+ *      Table Editor → Create a new table
+ *      Name: files
+ *      Columns (add these exactly):
+ *        id          uuid  default: gen_random_uuid()  primary key
+ *        module      text
+ *        category    text
+ *        name        text
+ *        path        text
+ *        size        int8
+ *        type        text
+ *        url         text
+ *        uploaded_at timestamptz  default: now()
+ *      Enable Row Level Security = OFF (for internal use)
+ * ──────────────────────────────────────────────────────────
+ */
 
-'use strict';
+const SUPABASE_URL      = 'YOUR_SUPABASE_URL_HERE';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
 
-// ── SITE DATA MAP ─────────────────────────────────────────────────────────────
-
-const SITE_MAP = {
-  dashboard: {
-    label: 'Dashboard',
-    icon: 'fa-gauge-high',
-    type: 'dashboard',
-    breadcrumb: [{ label: 'Dashboard', page: 'dashboard' }]
+// ════════════════════════════════════════════════════
+// MODULE REGISTRY  –  every navigable destination
+// ════════════════════════════════════════════════════
+const MODULES = {
+  home: {
+    label: 'Home',
+    path: ['Home'],
   },
   mechanical: {
     label: 'Mechanical',
-    icon: 'fa-gear',
-    type: 'section',
-    desc: 'Mechanical maintenance division — covers preventive, predictive and corrective maintenance for all mechanical systems across Tata Steel plants.',
-    children: [],
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'Maintenance', page: null },
-      { label: 'Mechanical', page: 'mechanical' }
-    ]
+    path: ['Home', 'Mechanical'],
+    desc: 'Mechanical maintenance training resources covering equipment maintenance, inspection procedures, and mechanical systems.',
   },
-  'eei-epc': {
+  eei: {
+    label: 'Electrical (EEI)',
+    path: ['Home', 'Electrical (EEI)'],
+    desc: 'Electrical EEI overview – umbrella for EPC, EDR, and EGS training streams.',
+  },
+  epc: {
     label: 'EPC',
-    icon: 'fa-microchip',
-    type: 'section',
-    desc: 'Electrical Process Control (EPC) division under Electrical & Electronics Instrumentation (EEI). Covers PLC, Instrumentation, and Electronics & Communication.',
-    children: [
-      { page: 'plc-pre', label: 'PLC — Pre-EMP', icon: 'fa-circle-nodes', desc: 'Pre-Employment training for PLC fundamentals' },
-      { page: 'plc-post-group', label: 'PLC — Post-EMP', icon: 'fa-forward', desc: 'Advanced Post-Employment PLC modules' },
-      { page: 'instrumentation', label: 'Instrumentation', icon: 'fa-temperature-half', desc: 'Process instrumentation training' },
-      { page: 'electronics', label: 'Electronics & Communication', icon: 'fa-radio', desc: 'Electronics and communication systems' }
-    ],
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'Maintenance', page: null },
-      { label: 'Electrical (EEI)', page: 'eei' },
-      { label: 'EPC', page: 'eei-epc' }
-    ]
+    path: ['Home', 'Electrical (EEI)', 'EPC'],
+    desc: 'Electrical Power & Control – covers PLC, Instrumentation, and Electronics & Communication training.',
   },
-  'eei-edr': {
+  edr: {
     label: 'EDR',
-    icon: 'fa-chart-line',
-    type: 'section',
-    desc: 'Electrical Design & Reliability (EDR) division focuses on the design standards, reliability engineering, and life-cycle management of electrical systems.',
-    children: [],
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'Maintenance', page: null },
-      { label: 'Electrical (EEI)', page: 'eei' },
-      { label: 'EDR', page: 'eei-edr' }
-    ]
+    path: ['Home', 'Electrical (EEI)', 'EDR'],
+    desc: 'EDR training resources and materials.',
   },
-  'eei-egs': {
+  egs: {
     label: 'EGS',
-    icon: 'fa-shield-halved',
-    type: 'section',
-    desc: 'Electrical General Services (EGS) division manages general electrical services, power distribution, and facility electrical systems.',
-    children: [],
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'Maintenance', page: null },
-      { label: 'Electrical (EEI)', page: 'eei' },
-      { label: 'EGS', page: 'eei-egs' }
-    ]
+    path: ['Home', 'Electrical (EEI)', 'EGS'],
+    desc: 'EGS training resources and materials.',
   },
   'plc-pre': {
-    label: 'PLC — Pre-EMP',
-    icon: 'fa-play',
-    type: 'section',
-    desc: 'Pre-Employment PLC training module. Foundational concepts in Programmable Logic Controllers before job placement.',
-    children: [],
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'EPC', page: 'eei-epc' },
-      { label: 'PLC', page: null },
-      { label: 'Pre-EMP', page: 'plc-pre' }
-    ]
+    label: 'PLC – Pre-EMP',
+    path: ['Home', 'Electrical (EEI)', 'EPC', 'PLC', 'Pre-EMP'],
+    desc: 'Pre-Employment training for PLC systems. Covers foundational concepts before formal EMP enrollment.',
   },
-  'plc-post-group': {
-    label: 'PLC — Post-EMP',
-    icon: 'fa-forward',
-    type: 'section',
-    desc: 'Post-Employment PLC training. Advanced structured modules covering ECBS, SOE, E4, and training request workflows.',
-    children: [
-      { page: 'SCEP21', label: 'SCEP21 (Rockwell)', icon: 'fa-cube', desc: 'ECBS Rockwell PLC module' },
-      { page: 'SCEP22', label: 'SCEP22 (Siemens)', icon: 'fa-cube', desc: 'ECBS Siemens PLC module' },
-      { page: 'SCEP23', label: 'SCEP23 (ABB)', icon: 'fa-cube', desc: 'ECBS ABB PLC module' },
-      { page: 'SCEP32', label: 'SCEP32 (Data Comm.)', icon: 'fa-cube', desc: 'ECBS Data Communication module' },
-      { page: 'SEPLC1', label: 'SEPLC1 — Siemens', icon: 'fa-diagram-project', desc: 'SOE Siemens Level 1' },
-      { page: 'SEPLC2', label: 'SEPLC2 — Siemens', icon: 'fa-diagram-project', desc: 'SOE Siemens Level 2' },
-      { page: 'SEPLC3', label: 'SEPLC3 — Siemens', icon: 'fa-diagram-project', desc: 'SOE Siemens Level 3' },
-      { page: 'SEABB1', label: 'SEABB1 — ABB', icon: 'fa-diagram-project', desc: 'SOE ABB Level 1' },
-      { page: 'SEABB2', label: 'SEABB2 — ABB', icon: 'fa-diagram-project', desc: 'SOE ABB Level 2' },
-      { page: 'SEABB3', label: 'SEABB3 — ABB', icon: 'fa-diagram-project', desc: 'SOE ABB Level 3' },
-      { page: 'E4', label: 'E4', icon: 'fa-e', desc: 'Advanced E4 module' },
-      { page: 'request', label: 'Request', icon: 'fa-paper-plane', desc: 'Training request form' }
-    ],
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'EPC', page: 'eei-epc' },
-      { label: 'PLC', page: null },
-      { label: 'Post-EMP', page: 'plc-post-group' }
-    ]
+  'plc-post': {
+    label: 'PLC – Post-EMP',
+    path: ['Home', 'Electrical (EEI)', 'EPC', 'PLC', 'Post-EMP'],
+    desc: 'Post-EMP advanced PLC training resources including ECBS, SOE, E4, and Request modules.',
   },
-  instrumentation: {
-    label: 'Instrumentation',
-    icon: 'fa-temperature-half',
-    type: 'section',
-    desc: 'Process instrumentation covers temperature, pressure, flow, and level measurement instruments used in steel plant operations.',
-    children: [],
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'EPC', page: 'eei-epc' },
-      { label: 'Instrumentation', page: 'instrumentation' }
-    ]
+  'ecbs-scep21': {
+    label: 'SCEP21 – Rockwell',
+    path: ['Home', 'EEI', 'EPC', 'PLC', 'Post-EMP', 'ECBS', 'SCEP21'],
+    desc: 'ECBS SCEP21 – Rockwell Automation PLC training. Covers Allen-Bradley PLCs and Studio 5000 programming environment.',
   },
-  electronics: {
-    label: 'Electronics & Communication',
-    icon: 'fa-radio',
-    type: 'section',
-    desc: 'Electronics and communication systems training covering signal processing, industrial communication protocols, and embedded systems.',
-    children: [],
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'EPC', page: 'eei-epc' },
-      { label: 'Electronics & Communication', page: 'electronics' }
-    ]
+  'ecbs-scep22': {
+    label: 'SCEP22 – Siemens',
+    path: ['Home', 'EEI', 'EPC', 'PLC', 'Post-EMP', 'ECBS', 'SCEP22'],
+    desc: 'ECBS SCEP22 – Siemens PLC training. Covers S7 series PLCs and TIA Portal programming.',
   },
-
-  // ── TRAINING MODULES (leaf) ──────────────────────────────────────────────
-  SCEP21: {
-    label: 'SCEP21',
-    icon: 'fa-cube',
-    type: 'module',
-    tag: 'ECBS · Rockwell · Post-EMP',
-    desc: 'PLC-based control system training using Rockwell Automation (Allen-Bradley) platforms. Covers Studio 5000, RSLogix, and ControlLogix architecture.',
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'EPC', page: 'eei-epc' },
-      { label: 'Post-EMP', page: 'plc-post-group' },
-      { label: 'ECBS', page: null },
-      { label: 'SCEP21', page: 'SCEP21' }
-    ]
+  'ecbs-scep23': {
+    label: 'SCEP23 – ABB',
+    path: ['Home', 'EEI', 'EPC', 'PLC', 'Post-EMP', 'ECBS', 'SCEP23'],
+    desc: 'ECBS SCEP23 – ABB PLC training. Covers AC500 series and Automation Builder software.',
   },
-  SCEP22: {
-    label: 'SCEP22',
-    icon: 'fa-cube',
-    type: 'module',
-    tag: 'ECBS · Siemens · Post-EMP',
-    desc: 'PLC control system training using Siemens SIMATIC family. Covers TIA Portal, S7-300/400/1500 series programming and diagnostics.',
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'EPC', page: 'eei-epc' },
-      { label: 'Post-EMP', page: 'plc-post-group' },
-      { label: 'ECBS', page: null },
-      { label: 'SCEP22', page: 'SCEP22' }
-    ]
+  'ecbs-scep32': {
+    label: 'SCEP32 – Data Communication',
+    path: ['Home', 'EEI', 'EPC', 'PLC', 'Post-EMP', 'ECBS', 'SCEP32'],
+    desc: 'ECBS SCEP32 – Industrial Data Communication training. Covers PROFIBUS, PROFINET, Ethernet/IP protocols.',
   },
-  SCEP23: {
-    label: 'SCEP23',
-    icon: 'fa-cube',
-    type: 'module',
-    tag: 'ECBS · ABB · Post-EMP',
-    desc: 'PLC control system training on ABB platform. Covers AC500 series, Automation Builder, and ABB industrial automation ecosystem.',
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'EPC', page: 'eei-epc' },
-      { label: 'Post-EMP', page: 'plc-post-group' },
-      { label: 'ECBS', page: null },
-      { label: 'SCEP23', page: 'SCEP23' }
-    ]
+  'soe-seplc1': {
+    label: 'SEPLC1 – Siemens',
+    path: ['Home', 'EEI', 'EPC', 'PLC', 'Post-EMP', 'SOE', 'Siemens', 'SEPLC1'],
+    desc: 'SOE Siemens SEPLC1 – Level 1 Siemens PLC maintenance and operation training.',
   },
-  SCEP32: {
-    label: 'SCEP32',
-    icon: 'fa-cube',
-    type: 'module',
-    tag: 'ECBS · Data Communication · Post-EMP',
-    desc: 'Data communication protocols for industrial automation. Covers PROFIBUS, PROFINET, Ethernet/IP, Modbus, and OPC-UA.',
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'EPC', page: 'eei-epc' },
-      { label: 'Post-EMP', page: 'plc-post-group' },
-      { label: 'ECBS', page: null },
-      { label: 'SCEP32', page: 'SCEP32' }
-    ]
+  'soe-seplc2': {
+    label: 'SEPLC2 – Siemens',
+    path: ['Home', 'EEI', 'EPC', 'PLC', 'Post-EMP', 'SOE', 'Siemens', 'SEPLC2'],
+    desc: 'SOE Siemens SEPLC2 – Level 2 advanced Siemens PLC programming and diagnostics.',
   },
-  SEPLC1: {
-    label: 'SEPLC1',
-    icon: 'fa-diagram-project',
-    type: 'module',
-    tag: 'SOE · Siemens · Level 1',
-    desc: 'Sequence of Events (SOE) training — Siemens Level 1. Foundational SOE concepts, event logging and alarm management fundamentals.',
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'Post-EMP', page: 'plc-post-group' },
-      { label: 'SOE', page: null },
-      { label: 'Siemens', page: null },
-      { label: 'SEPLC1', page: 'SEPLC1' }
-    ]
+  'soe-seplc3': {
+    label: 'SEPLC3 – Siemens',
+    path: ['Home', 'EEI', 'EPC', 'PLC', 'Post-EMP', 'SOE', 'Siemens', 'SEPLC3'],
+    desc: 'SOE Siemens SEPLC3 – Level 3 specialist Siemens PLC systems and network integration.',
   },
-  SEPLC2: {
-    label: 'SEPLC2',
-    icon: 'fa-diagram-project',
-    type: 'module',
-    tag: 'SOE · Siemens · Level 2',
-    desc: 'Sequence of Events (SOE) training — Siemens Level 2. Advanced configuration, time synchronisation, and fault diagnostics.',
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'Post-EMP', page: 'plc-post-group' },
-      { label: 'SOE', page: null },
-      { label: 'Siemens', page: null },
-      { label: 'SEPLC2', page: 'SEPLC2' }
-    ]
+  'soe-seabb1': {
+    label: 'SEABB1 – ABB',
+    path: ['Home', 'EEI', 'EPC', 'PLC', 'Post-EMP', 'SOE', 'ABB', 'SEABB1'],
+    desc: 'SOE ABB SEABB1 – Level 1 ABB PLC and drive systems training.',
   },
-  SEPLC3: {
-    label: 'SEPLC3',
-    icon: 'fa-diagram-project',
-    type: 'module',
-    tag: 'SOE · Siemens · Level 3',
-    desc: 'Sequence of Events (SOE) training — Siemens Level 3. Expert-level SOE integration, cybersecurity, and cross-system communication.',
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'Post-EMP', page: 'plc-post-group' },
-      { label: 'SOE', page: null },
-      { label: 'Siemens', page: null },
-      { label: 'SEPLC3', page: 'SEPLC3' }
-    ]
+  'soe-seabb2': {
+    label: 'SEABB2 – ABB',
+    path: ['Home', 'EEI', 'EPC', 'PLC', 'Post-EMP', 'SOE', 'ABB', 'SEABB2'],
+    desc: 'SOE ABB SEABB2 – Level 2 advanced ABB systems configuration and troubleshooting.',
   },
-  SEABB1: {
-    label: 'SEABB1',
-    icon: 'fa-diagram-project',
-    type: 'module',
-    tag: 'SOE · ABB · Level 1',
-    desc: 'Sequence of Events (SOE) training — ABB Level 1. Foundational ABB SOE concepts, Relion relay integration, and event recording.',
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'Post-EMP', page: 'plc-post-group' },
-      { label: 'SOE', page: null },
-      { label: 'ABB', page: null },
-      { label: 'SEABB1', page: 'SEABB1' }
-    ]
+  'soe-seabb3': {
+    label: 'SEABB3 – ABB',
+    path: ['Home', 'EEI', 'EPC', 'PLC', 'Post-EMP', 'SOE', 'ABB', 'SEABB3'],
+    desc: 'SOE ABB SEABB3 – Level 3 specialist ABB automation and safety systems.',
   },
-  SEABB2: {
-    label: 'SEABB2',
-    icon: 'fa-diagram-project',
-    type: 'module',
-    tag: 'SOE · ABB · Level 2',
-    desc: 'Sequence of Events (SOE) training — ABB Level 2. Advanced configuration of ABB SOE systems and network-based event synchronisation.',
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'Post-EMP', page: 'plc-post-group' },
-      { label: 'SOE', page: null },
-      { label: 'ABB', page: null },
-      { label: 'SEABB2', page: 'SEABB2' }
-    ]
-  },
-  SEABB3: {
-    label: 'SEABB3',
-    icon: 'fa-diagram-project',
-    type: 'module',
-    tag: 'SOE · ABB · Level 3',
-    desc: 'Sequence of Events (SOE) training — ABB Level 3. Expert integration with plant DCS and integration testing protocols.',
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'Post-EMP', page: 'plc-post-group' },
-      { label: 'SOE', page: null },
-      { label: 'ABB', page: null },
-      { label: 'SEABB3', page: 'SEABB3' }
-    ]
-  },
-  E4: {
+  e4: {
     label: 'E4',
-    icon: 'fa-e',
-    type: 'module',
-    tag: 'Post-EMP · Advanced Module',
-    desc: 'E4 Advanced training module covering higher-level integration, plant-wide electrical system management, and energy optimisation strategies.',
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'Post-EMP', page: 'plc-post-group' },
-      { label: 'E4', page: 'E4' }
-    ]
+    path: ['Home', 'EEI', 'EPC', 'PLC', 'Post-EMP', 'E4'],
+    desc: 'E4 training module resources and materials.',
   },
   request: {
     label: 'Request',
-    icon: 'fa-paper-plane',
-    type: 'module',
-    tag: 'Post-EMP · Training Request',
-    desc: 'Submit a new training request for any module, schedule a session, or request custom training materials for your team.',
-    breadcrumb: [
-      { label: 'Dashboard', page: 'dashboard' },
-      { label: 'Post-EMP', page: 'plc-post-group' },
-      { label: 'Request', page: 'request' }
-    ]
-  }
+    path: ['Home', 'EEI', 'EPC', 'PLC', 'Post-EMP', 'Request'],
+    desc: 'Training resource request module – submit requests for new training materials or course additions.',
+  },
+  instrumentation: {
+    label: 'Instrumentation',
+    path: ['Home', 'EEI', 'EPC', 'Instrumentation'],
+    desc: 'Instrumentation training – covers process instrumentation, calibration, HART & FOUNDATION Fieldbus protocols.',
+  },
+  electronics: {
+    label: 'Electronics & Communication',
+    path: ['Home', 'EEI', 'EPC', 'Electronics & Communication'],
+    desc: 'Electronics & Communication training – covers industrial electronics, signal processing, and communication systems.',
+  },
 };
 
-// ── TRAINING CARD DEFINITIONS ─────────────────────────────────────────────────
-const TRAINING_CARDS = [
-  {
-    id: 'ppt',
-    title: 'Presentations',
-    sub: 'PowerPoint slides',
-    icon: 'fa-file-powerpoint',
-    color: '#d0451b',
-    desc: 'Slide decks and visual presentations covering core concepts, diagrams, and lecture notes for the module.'
-  },
-  {
-    id: 'pdf',
-    title: 'PDF Manuals',
-    sub: 'Reference documents',
-    icon: 'fa-file-pdf',
-    color: '#e11d48',
-    desc: 'Comprehensive reference manuals, datasheets, and technical documentation in PDF format.'
-  },
-  {
-    id: 'study',
-    title: 'Study Material',
-    sub: 'Reading resources',
-    icon: 'fa-book-open',
-    color: '#0052a5',
-    desc: 'Structured study guides, handouts, and supplementary reading material for self-paced learning.'
-  },
-  {
-    id: 'pretest',
-    title: 'Pre-Test Quiz',
-    sub: 'Baseline assessment',
-    icon: 'fa-clipboard-question',
-    color: '#7c3aed',
-    desc: 'Baseline knowledge assessment before training begins. Identifies learning gaps and readiness level.'
-  },
-  {
-    id: 'posttest',
-    title: 'Post-Test Quiz',
-    sub: 'Knowledge verification',
-    icon: 'fa-circle-check',
-    color: '#059669',
-    desc: 'Comprehensive assessment after module completion to verify learning outcomes and certify competency.'
-  },
-  {
-    id: 'result',
-    title: 'Results',
-    sub: 'Score & progress',
-    icon: 'fa-chart-bar',
-    color: '#0891b2',
-    desc: 'View your test scores, attempt history, progress tracking, and certification status for this module.'
-  },
-  {
-    id: 'feedback',
-    title: 'Feedback',
-    sub: 'Rate & review',
-    icon: 'fa-star',
-    color: '#d97706',
-    desc: 'Share your training experience, suggest improvements, and rate the quality of the training material.'
-  }
+const CATEGORIES = [
+  { key: 'presentations', label: 'Presentations',  icon: 'presentation' },
+  { key: 'manuals',       label: 'PDF Manuals',     icon: 'file-text' },
+  { key: 'study',         label: 'Study Materials', icon: 'book-open' },
+  { key: 'pretest',       label: 'Pre-Test Quiz',   icon: 'clipboard-list' },
+  { key: 'posttest',      label: 'Post-Test Quiz',  icon: 'clipboard-check' },
+  { key: 'results',       label: 'Results',         icon: 'bar-chart-2' },
+  { key: 'feedback',      label: 'Feedback',        icon: 'message-square' },
 ];
 
-// ── SEARCH INDEX ──────────────────────────────────────────────────────────────
-const SEARCH_INDEX = [
-  { code: 'SCEP21', label: 'SCEP21 — Rockwell PLC', path: 'EPC › ECBS', icon: 'fa-cube', page: 'SCEP21' },
-  { code: 'SCEP22', label: 'SCEP22 — Siemens PLC', path: 'EPC › ECBS', icon: 'fa-cube', page: 'SCEP22' },
-  { code: 'SCEP23', label: 'SCEP23 — ABB PLC', path: 'EPC › ECBS', icon: 'fa-cube', page: 'SCEP23' },
-  { code: 'SCEP32', label: 'SCEP32 — Data Communication', path: 'EPC › ECBS', icon: 'fa-cube', page: 'SCEP32' },
-  { code: 'SEPLC1', label: 'SEPLC1 — SOE Siemens L1', path: 'EPC › SOE › Siemens', icon: 'fa-diagram-project', page: 'SEPLC1' },
-  { code: 'SEPLC2', label: 'SEPLC2 — SOE Siemens L2', path: 'EPC › SOE › Siemens', icon: 'fa-diagram-project', page: 'SEPLC2' },
-  { code: 'SEPLC3', label: 'SEPLC3 — SOE Siemens L3', path: 'EPC › SOE › Siemens', icon: 'fa-diagram-project', page: 'SEPLC3' },
-  { code: 'SEABB1', label: 'SEABB1 — SOE ABB L1', path: 'EPC › SOE › ABB', icon: 'fa-diagram-project', page: 'SEABB1' },
-  { code: 'SEABB2', label: 'SEABB2 — SOE ABB L2', path: 'EPC › SOE › ABB', icon: 'fa-diagram-project', page: 'SEABB2' },
-  { code: 'SEABB3', label: 'SEABB3 — SOE ABB L3', path: 'EPC › SOE › ABB', icon: 'fa-diagram-project', page: 'SEABB3' },
-  { code: 'E4', label: 'E4 — Advanced Module', path: 'EPC › Post-EMP', icon: 'fa-e', page: 'E4' },
-  { code: 'Request', label: 'Request — Training Request', path: 'EPC › Post-EMP', icon: 'fa-paper-plane', page: 'request' },
-  { code: 'Mechanical', label: 'Mechanical Division', path: 'Maintenance', icon: 'fa-gear', page: 'mechanical' },
-  { code: 'EPC', label: 'EPC — Electrical Process Control', path: 'Electrical (EEI)', icon: 'fa-microchip', page: 'eei-epc' },
-  { code: 'EDR', label: 'EDR — Electrical Design & Reliability', path: 'Electrical (EEI)', icon: 'fa-chart-line', page: 'eei-edr' },
-  { code: 'EGS', label: 'EGS — Electrical General Services', path: 'Electrical (EEI)', icon: 'fa-shield-halved', page: 'eei-egs' },
-  { code: 'Pre-EMP', label: 'PLC Pre-EMP', path: 'EPC › PLC', icon: 'fa-play', page: 'plc-pre' },
-  { code: 'Post-EMP', label: 'PLC Post-EMP', path: 'EPC › PLC', icon: 'fa-forward', page: 'plc-post-group' },
-  { code: 'Instrumentation', label: 'Instrumentation', path: 'EPC', icon: 'fa-temperature-half', page: 'instrumentation' },
-  { code: 'Electronics', label: 'Electronics & Communication', path: 'EPC', icon: 'fa-radio', page: 'electronics' }
-];
+// ════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════
+let currentModule   = 'home';
+let currentCategory = 'presentations';
+let uploadContext   = { module: null, category: null };
+let uploadQueue     = [];   // { file, id }
+let fileCache       = {};   // { "module:category": [...] }
 
-// ── STATE ─────────────────────────────────────────────────────────────────────
-let currentPage = 'dashboard';
-let recentPages = [];
-let sidebarOpen = true;
-let mobileWidth = window.innerWidth <= 768;
+// ════════════════════════════════════════════════════
+// SUPABASE CLIENT (vanilla fetch-based)
+// ════════════════════════════════════════════════════
+const supabase = (() => {
+  const configured = SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE';
 
-// ── DOM REFS ──────────────────────────────────────────────────────────────────
-const hamburgerBtn   = document.getElementById('hamburgerBtn');
-const sidebar        = document.getElementById('sidebar');
-const sidebarOverlay = document.getElementById('sidebarOverlay');
-const mainContent    = document.getElementById('mainContent');
-const themeToggle    = document.getElementById('themeToggle');
-const themeIcon      = document.getElementById('themeIcon');
-const searchInput    = document.getElementById('searchInput');
-const searchResults  = document.getElementById('searchResults');
-const breadcrumb     = document.getElementById('breadcrumb');
-const recentList     = document.getElementById('recentList');
-
-// Page containers
-const pageDashboard = document.getElementById('page-dashboard');
-const pageSection   = document.getElementById('page-section');
-const pageModule    = document.getElementById('page-module');
-
-// Section page elements
-const sectionHeroIcon  = document.getElementById('sectionHeroIcon');
-const sectionHeroTitle = document.getElementById('sectionHeroTitle');
-const sectionHeroDesc  = document.getElementById('sectionHeroDesc');
-const childrenGrid     = document.getElementById('childrenGrid');
-
-// Module page elements
-const moduleIcon    = document.getElementById('moduleIcon');
-const moduleTag     = document.getElementById('moduleTag');
-const moduleTitle   = document.getElementById('moduleTitle');
-const moduleDesc    = document.getElementById('moduleDesc');
-const trainingGrid  = document.getElementById('trainingGrid');
-
-// ── SIDEBAR TOGGLE ────────────────────────────────────────────────────────────
-function toggleSidebar() {
-  if (mobileWidth) {
-    sidebar.classList.toggle('mobile-open');
-    sidebarOverlay.classList.toggle('show');
-    hamburgerBtn.classList.toggle('active');
-  } else {
-    sidebarOpen = !sidebarOpen;
-    sidebar.classList.toggle('collapsed', !sidebarOpen);
-    mainContent.classList.toggle('expanded', !sidebarOpen);
-    hamburgerBtn.classList.toggle('active', !sidebarOpen);
+  async function query(endpoint, options = {}) {
+    if (!configured) return { data: null, error: { message: 'Supabase not configured' } };
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation',
+        ...options.headers,
+      },
+      ...options,
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      return { data: null, error: err };
+    }
+    const data = await resp.json().catch(() => null);
+    return { data, error: null };
   }
-}
 
-hamburgerBtn.addEventListener('click', toggleSidebar);
-sidebarOverlay.addEventListener('click', () => {
-  sidebar.classList.remove('mobile-open');
-  sidebarOverlay.classList.remove('show');
-  hamburgerBtn.classList.remove('active');
-});
+  async function uploadFile(bucket, path, file) {
+    if (!configured) return { data: null, error: { message: 'Supabase not configured' } };
+    const resp = await fetch(`${SUPABASE_URL}/storage/v1/object/${bucket}/${path}`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': file.type || 'application/octet-stream',
+      },
+      body: file,
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      return { data: null, error: err };
+    }
+    const data = await resp.json().catch(() => null);
+    return { data, error: null };
+  }
 
-window.addEventListener('resize', () => {
-  mobileWidth = window.innerWidth <= 768;
-  if (!mobileWidth) {
-    sidebar.classList.remove('mobile-open');
-    sidebarOverlay.classList.remove('show');
+  function getPublicUrl(bucket, path) {
+    return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+  }
+
+  async function deleteFile(bucket, path) {
+    if (!configured) return { error: { message: 'Not configured' } };
+    const resp = await fetch(`${SUPABASE_URL}/storage/v1/object/${bucket}/${path}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    if (!resp.ok) return { error: await resp.json().catch(() => ({})) };
+    return { error: null };
+  }
+
+  return { query, uploadFile, getPublicUrl, deleteFile, configured };
+})();
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  lucide.createIcons();
+  initNav();
+  initSidebar();
+  initSearch();
+  initUploadModal();
+  navigateTo('home');
+  if (!supabase.configured) {
+    console.warn('Supabase not configured. Files will not persist. See script.js for setup instructions.');
   }
 });
 
-// ── THEME TOGGLE ──────────────────────────────────────────────────────────────
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  themeIcon.className = theme === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
-  localStorage.setItem('ts_theme', theme);
-}
+// ════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════
+function initNav() {
+  // All data-nav links (sidebar + quick-nav + home cards)
+  document.addEventListener('click', e => {
+    const el = e.target.closest('[data-nav]');
+    if (!el) return;
+    e.preventDefault();
+    const dest = el.getAttribute('data-nav');
+    if (dest) navigateTo(dest);
+    // close quick-nav menu on click
+    document.getElementById('quick-nav-menu').classList.remove('open');
+    // close sidebar on mobile
+    if (window.innerWidth <= 900) closeSidebar();
+  });
 
-themeToggle.addEventListener('click', () => {
-  const current = document.documentElement.getAttribute('data-theme');
-  applyTheme(current === 'dark' ? 'light' : 'dark');
-});
-
-// Load saved theme
-const savedTheme = localStorage.getItem('ts_theme') || 'dark';
-applyTheme(savedTheme);
-
-// ── TREE NAV ──────────────────────────────────────────────────────────────────
-document.querySelectorAll('.tree-parent').forEach(el => {
-  el.addEventListener('click', e => {
+  // Quick nav toggle
+  document.getElementById('quick-nav-toggle').addEventListener('click', e => {
     e.stopPropagation();
-    const key = el.dataset.key;
-    const children = document.getElementById(key);
-    if (!children) return;
-    const isOpen = children.classList.contains('open');
-    children.classList.toggle('open', !isOpen);
-    el.classList.toggle('open', !isOpen);
+    document.getElementById('quick-nav-menu').classList.toggle('open');
   });
-});
-
-document.querySelectorAll('.tree-leaf').forEach(el => {
-  el.addEventListener('click', () => {
-    const page = el.dataset.page;
-    if (page) navigateTo(page);
+  document.addEventListener('click', () => {
+    document.getElementById('quick-nav-menu').classList.remove('open');
   });
-});
 
-function highlightSidebarItem(pageKey) {
-  document.querySelectorAll('.tree-label').forEach(el => el.classList.remove('active'));
-  const target = document.querySelector(`.tree-label[data-page="${pageKey}"]`);
-  if (!target) return;
-  target.classList.add('active');
-  // Expand all parents
-  let parent = target.parentElement;
-  while (parent) {
-    if (parent.classList.contains('tree-children')) {
-      parent.classList.add('open');
-      const sibling = parent.previousElementSibling;
-      if (sibling && sibling.classList.contains('tree-parent')) {
-        sibling.classList.add('open');
-      }
-    }
-    parent = parent.parentElement;
-  }
-}
-
-// ── BREADCRUMB ────────────────────────────────────────────────────────────────
-function renderBreadcrumb(items) {
-  breadcrumb.innerHTML = '';
-  items.forEach((item, i) => {
-    if (i > 0) {
-      const sep = document.createElement('span');
-      sep.className = 'sep';
-      sep.textContent = '›';
-      breadcrumb.appendChild(sep);
-    }
-    if (item.page && i < items.length - 1) {
-      const a = document.createElement('a');
-      a.href = '#';
-      a.textContent = item.label;
-      a.addEventListener('click', e => { e.preventDefault(); navigateTo(item.page); });
-      breadcrumb.appendChild(a);
-    } else {
-      const span = document.createElement('span');
-      span.className = i === items.length - 1 ? 'current' : '';
-      span.textContent = item.label;
-      breadcrumb.appendChild(span);
-    }
+  // Tab buttons
+  document.querySelector('.tab-strip').addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    const tab = btn.dataset.tab;
+    activateTab(tab);
   });
 }
 
-// ── RECENT PAGES ──────────────────────────────────────────────────────────────
-function addToRecent(pageKey) {
-  if (pageKey === 'dashboard') return;
-  const data = SITE_MAP[pageKey];
-  if (!data) return;
-  recentPages = recentPages.filter(p => p.page !== pageKey);
-  recentPages.unshift({ page: pageKey, label: data.label, icon: data.icon });
-  if (recentPages.length > 8) recentPages = recentPages.slice(0, 8);
-  renderRecent();
-}
+function navigateTo(moduleKey) {
+  if (!MODULES[moduleKey]) return;
+  currentModule = moduleKey;
 
-function renderRecent() {
-  if (recentPages.length === 0) {
-    recentList.innerHTML = '<div class="recent-empty"><i class="fa-solid fa-folder-open"></i> No recent modules yet. Start exploring!</div>';
+  // Update active nav items
+  document.querySelectorAll('[data-nav]').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('data-nav') === moduleKey);
+  });
+
+  if (moduleKey === 'home') {
+    showPage('page-home');
+    updateBreadcrumb([{ label: 'Home', key: 'home' }]);
+    updateLocationChip('Home');
     return;
   }
-  recentList.innerHTML = recentPages.map(item => `
-    <div class="recent-chip" data-page="${item.page}">
-      <i class="fa-solid ${item.icon}"></i> ${item.label}
-    </div>
-  `).join('');
-  recentList.querySelectorAll('.recent-chip').forEach(chip => {
-    chip.addEventListener('click', () => navigateTo(chip.dataset.page));
+
+  showPage('page-module');
+  const mod = MODULES[moduleKey];
+  document.getElementById('module-title').textContent = mod.label;
+  document.getElementById('module-desc').textContent  = mod.desc || '';
+
+  // Build breadcrumb
+  const crumbs = mod.path.map((label, i) => ({
+    label,
+    key: i === 0 ? 'home' : Object.keys(MODULES).find(k => MODULES[k].label === label) || null,
+  }));
+  updateBreadcrumb(crumbs);
+  updateLocationChip(mod.label);
+
+  // Reset to first tab and load files
+  activateTab('presentations');
+  openSidebarTo(moduleKey);
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+}
+
+function updateBreadcrumb(crumbs) {
+  const ol = document.getElementById('breadcrumb');
+  ol.innerHTML = crumbs.map((c, i) => {
+    const isLast = i === crumbs.length - 1;
+    return `<li class="${isLast ? 'current' : ''}">
+      ${isLast || !c.key
+        ? `<span>${c.label}</span>`
+        : `<a href="#" data-nav="${c.key}">${c.label}</a>`}
+    </li>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function updateLocationChip(label) {
+  document.getElementById('location-chip').textContent = label;
+}
+
+// ════════════════════════════════════════════════════
+// SIDEBAR BEHAVIOUR
+// ════════════════════════════════════════════════════
+function initSidebar() {
+  const hamburger = document.getElementById('hamburger-btn');
+  const overlay   = document.getElementById('sidebar-overlay');
+
+  hamburger.addEventListener('click', () => {
+    const sidebar = document.getElementById('sidebar');
+    const open = sidebar.classList.toggle('open');
+    overlay.classList.toggle('active', open);
+  });
+  overlay.addEventListener('click', closeSidebar);
+
+  // Collapsible section headers
+  document.querySelectorAll('.nav-section-header').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const section = btn.dataset.section;
+      const body = document.getElementById(`section-${section}`);
+      if (!body) return;
+      btn.classList.toggle('open');
+      body.classList.toggle('open');
+    });
+  });
+
+  // Sub-section headers (nested collapse)
+  document.querySelectorAll('.nav-sub-header').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const sub = btn.dataset.sub;
+      const body = document.getElementById(`subsection-${sub}`);
+      if (!body) return;
+      btn.classList.toggle('open');
+      body.classList.toggle('open');
+    });
   });
 }
 
-// ── PAGE NAVIGATION ───────────────────────────────────────────────────────────
-function showPage(type) {
-  [pageDashboard, pageSection, pageModule].forEach(p => p.classList.remove('active'));
-  if (type === 'dashboard') pageDashboard.classList.add('active');
-  else if (type === 'section') pageSection.classList.add('active');
-  else if (type === 'module') pageModule.classList.add('active');
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('active');
 }
 
-function navigateTo(pageKey) {
-  if (!SITE_MAP[pageKey]) return;
-  currentPage = pageKey;
-  const data = SITE_MAP[pageKey];
+// Auto-expand sidebar path to current module
+function openSidebarTo(moduleKey) {
+  const mod = MODULES[moduleKey];
+  if (!mod) return;
+  const path = mod.path.map(l => l.toLowerCase().replace(/\s/g, '-').replace(/[()&]/g, ''));
 
-  // Breadcrumb
-  renderBreadcrumb(data.breadcrumb);
+  // Open EEI section if needed
+  const needsEei = ['eei','epc','edr','egs','plc-pre','plc-post','ecbs-scep21','ecbs-scep22',
+    'ecbs-scep23','ecbs-scep32','soe-seplc1','soe-seplc2','soe-seplc3',
+    'soe-seabb1','soe-seabb2','soe-seabb3','e4','request','instrumentation','electronics'].includes(moduleKey);
+  if (needsEei) openSidebarSection('eei');
 
-  // Sidebar highlight
-  highlightSidebarItem(pageKey);
+  const needsMech = moduleKey === 'mechanical';
+  if (needsMech) openSidebarSection('mechanical');
 
-  // Recent
-  addToRecent(pageKey);
+  // Deeper auto-opens
+  const epcMods = ['epc','plc-pre','plc-post','ecbs-scep21','ecbs-scep22','ecbs-scep23',
+    'ecbs-scep32','soe-seplc1','soe-seplc2','soe-seplc3','soe-seabb1','soe-seabb2',
+    'soe-seabb3','e4','request','instrumentation','electronics'];
+  if (epcMods.includes(moduleKey)) openSubSection('epc');
 
-  // Show correct page
-  if (data.type === 'dashboard') {
-    showPage('dashboard');
-  } else if (data.type === 'section') {
-    renderSectionPage(pageKey, data);
-    showPage('section');
-  } else if (data.type === 'module') {
-    renderModulePage(pageKey, data);
-    showPage('module');
-  }
+  const plcMods = ['plc-pre','plc-post','ecbs-scep21','ecbs-scep22','ecbs-scep23',
+    'ecbs-scep32','soe-seplc1','soe-seplc2','soe-seplc3','soe-seabb1','soe-seabb2',
+    'soe-seabb3','e4','request'];
+  if (plcMods.includes(moduleKey)) openSubSection('plc');
 
-  // Close mobile sidebar
-  if (mobileWidth) {
-    sidebar.classList.remove('mobile-open');
-    sidebarOverlay.classList.remove('show');
-    hamburgerBtn.classList.remove('active');
-  }
+  const postMods = ['ecbs-scep21','ecbs-scep22','ecbs-scep23','ecbs-scep32',
+    'soe-seplc1','soe-seplc2','soe-seplc3','soe-seabb1','soe-seabb2','soe-seabb3','e4','request'];
+  if (postMods.includes(moduleKey)) openSubSection('plc-post');
 
-  // Scroll to top
-  mainContent.scrollTo({ top: 0, behavior: 'smooth' });
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (['ecbs-scep21','ecbs-scep22','ecbs-scep23','ecbs-scep32'].includes(moduleKey)) openSubSection('ecbs');
+  if (['soe-seplc1','soe-seplc2','soe-seplc3','soe-seabb1','soe-seabb2','soe-seabb3'].includes(moduleKey)) openSubSection('soe');
+  if (['soe-seplc1','soe-seplc2','soe-seplc3'].includes(moduleKey)) openSubSection('soe-siemens');
+  if (['soe-seabb1','soe-seabb2','soe-seabb3'].includes(moduleKey)) openSubSection('soe-abb');
 }
 
-// ── SECTION PAGE ──────────────────────────────────────────────────────────────
-function renderSectionPage(pageKey, data) {
-  sectionHeroIcon.innerHTML = `<i class="fa-solid ${data.icon}"></i>`;
-  sectionHeroTitle.textContent = data.label;
-  sectionHeroDesc.textContent = data.desc || '';
-
-  if (data.children && data.children.length > 0) {
-    childrenGrid.innerHTML = data.children.map(child => `
-      <div class="child-card" data-page="${child.page}">
-        <div class="child-card-icon"><i class="fa-solid ${child.icon}"></i></div>
-        <div class="child-card-name">${child.label}</div>
-        <div class="child-card-desc">${child.desc || ''}</div>
-      </div>
-    `).join('');
-    childrenGrid.querySelectorAll('.child-card').forEach(card => {
-      card.addEventListener('click', () => navigateTo(card.dataset.page));
-    });
-  } else {
-    childrenGrid.innerHTML = `
-      <div style="grid-column:1/-1; text-align:center; padding: 48px 0; color: var(--text-muted);">
-        <i class="fa-solid fa-folder-open" style="font-size:32px; margin-bottom:12px; display:block;"></i>
-        <div style="font-size:14px;">Sub-modules coming soon. Check back later.</div>
-      </div>
-    `;
-  }
+function openSidebarSection(key) {
+  const btn  = document.querySelector(`.nav-section-header[data-section="${key}"]`);
+  const body = document.getElementById(`section-${key}`);
+  if (btn)  btn.classList.add('open');
+  if (body) body.classList.add('open');
+}
+function openSubSection(key) {
+  const btn  = document.querySelector(`.nav-sub-header[data-sub="${key}"]`);
+  const body = document.getElementById(`subsection-${key}`);
+  if (btn)  btn.classList.add('open');
+  if (body) body.classList.add('open');
 }
 
-// ── MODULE PAGE ───────────────────────────────────────────────────────────────
-function renderModulePage(pageKey, data) {
-  moduleIcon.innerHTML = `<i class="fa-solid ${data.icon}"></i>`;
-  moduleTag.textContent = data.tag || '';
-  moduleTitle.textContent = data.label;
-  moduleDesc.textContent = data.desc || '';
+// ════════════════════════════════════════════════════
+// TABS & FILE PANELS
+// ════════════════════════════════════════════════════
+function activateTab(tabKey) {
+  currentCategory = tabKey;
 
-  trainingGrid.innerHTML = TRAINING_CARDS.map(card => `
-    <div class="training-card" style="--card-color:${card.color}">
-      <div class="tc-header">
-        <div class="tc-icon"><i class="fa-solid ${card.icon}"></i></div>
-        <div>
-          <div class="tc-title">${card.title}</div>
-          <div class="tc-sub">${card.sub}</div>
-        </div>
+  document.querySelectorAll('.tab-btn').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.tab === tabKey));
+  document.querySelectorAll('.tab-panel').forEach(panel =>
+    panel.classList.toggle('active', panel.id === `panel-${tabKey}`));
+
+  renderFilePanel(currentModule, tabKey);
+}
+
+function renderFilePanel(moduleKey, category) {
+  const panel = document.getElementById(`panel-${category}`);
+  if (!panel) return;
+
+  const cat = CATEGORIES.find(c => c.key === category);
+  const title = cat ? cat.label : category;
+
+  panel.innerHTML = `
+    <div class="file-panel-header">
+      <span class="file-panel-title">${title}</span>
+      <button class="btn-primary" id="open-upload-btn-${category}">
+        <i data-lucide="upload"></i> Upload File
+      </button>
+    </div>
+    <div id="file-list-${category}" class="file-list">
+      <div class="file-list-empty">
+        <i data-lucide="loader-circle" style="animation:spin 1s linear infinite"></i>
+        <p>Loading files…</p>
       </div>
-      <div class="tc-body">
-        <div class="tc-desc">${card.desc}</div>
-        <span class="tc-status under-construction">
-          <i class="fa-solid fa-triangle-exclamation"></i> Under Construction
-        </span>
-        <div class="uc-badge">
-          <i class="fa-solid fa-hard-hat"></i> Content being prepared
-        </div>
+    </div>
+  `;
+  lucide.createIcons();
+
+  document.getElementById(`open-upload-btn-${category}`).addEventListener('click', () => {
+    openUploadModal(moduleKey, category);
+  });
+
+  loadFiles(moduleKey, category);
+}
+
+async function loadFiles(moduleKey, category) {
+  const cacheKey = `${moduleKey}:${category}`;
+  const listEl   = document.getElementById(`file-list-${category}`);
+  if (!listEl) return;
+
+  // Check local cache first
+  if (fileCache[cacheKey]) {
+    renderFileList(listEl, fileCache[cacheKey], moduleKey, category);
+    return;
+  }
+
+  if (!supabase.configured) {
+    renderFileList(listEl, [], moduleKey, category);
+    return;
+  }
+
+  const { data, error } = await supabase.query(
+    `files?module=eq.${encodeURIComponent(moduleKey)}&category=eq.${encodeURIComponent(category)}&order=uploaded_at.desc`
+  );
+
+  if (error) {
+    listEl.innerHTML = `<div class="file-list-empty"><p style="color:var(--c-error)">Could not load files. Check Supabase configuration.</p></div>`;
+    return;
+  }
+
+  fileCache[cacheKey] = data || [];
+  renderFileList(listEl, fileCache[cacheKey], moduleKey, category);
+}
+
+function renderFileList(container, files, moduleKey, category) {
+  if (!files || files.length === 0) {
+    container.innerHTML = `
+      <div class="file-list-empty">
+        <i data-lucide="folder-open"></i>
+        <p>No files uploaded yet for this category.</p>
+        <p style="font-size:12px;margin-top:4px;color:var(--c-text-3)">Click <strong>Upload File</strong> to add materials.</p>
+      </div>`;
+    lucide.createIcons();
+    return;
+  }
+
+  container.innerHTML = files.map(f => `
+    <div class="file-row" data-file-id="${f.id}">
+      <div class="file-icon ${getExtClass(f.name)}">${getExtLabel(f.name)}</div>
+      <div class="file-info">
+        <div class="file-name">${escHtml(f.name)}</div>
+        <div class="file-meta">${formatSize(f.size)} · Uploaded ${formatDate(f.uploaded_at)}</div>
       </div>
-      <div class="tc-footer">
-        <button class="tc-btn" onclick="showUnderConstruction('${card.title}')">
-          <i class="fa-solid fa-clock"></i> Coming Soon
+      <div class="file-actions">
+        <a href="${escHtml(f.url)}" target="_blank" download="${escHtml(f.name)}" class="btn-icon" title="Download">
+          <i data-lucide="download"></i>
+        </a>
+        <button class="btn-icon delete-file-btn" data-file-id="${f.id}" data-file-path="${escHtml(f.path)}" data-module="${moduleKey}" data-category="${category}" title="Delete">
+          <i data-lucide="trash-2"></i>
         </button>
       </div>
     </div>
   `).join('');
-}
 
-function showUnderConstruction(title) {
-  // Brief toast-style notification
-  const existing = document.querySelector('.ts-toast');
-  if (existing) existing.remove();
+  lucide.createIcons();
 
-  const toast = document.createElement('div');
-  toast.className = 'ts-toast';
-  toast.innerHTML = `<i class="fa-solid fa-hard-hat"></i> <strong>${title}</strong> — Content is being prepared. Please check back soon.`;
-  toast.style.cssText = `
-    position:fixed; bottom:24px; right:24px;
-    background:var(--bg-surface); border:1px solid var(--bg-border);
-    border-left: 4px solid var(--brand-accent);
-    color:var(--text-primary); padding:14px 20px;
-    border-radius:8px; box-shadow:var(--shadow-lg);
-    font-size:13px; z-index:9999;
-    display:flex; align-items:center; gap:10px;
-    animation: slideInRight 0.3s ease;
-    max-width: 380px;
-  `;
-  document.head.insertAdjacentHTML('beforeend', `<style>
-    @keyframes slideInRight { from { transform: translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
-    @keyframes slideOutRight { from { transform:translateX(0); opacity:1; } to { transform:translateX(100%); opacity:0; } }
-  </style>`);
-  document.body.appendChild(toast);
-  setTimeout(() => {
-    toast.style.animation = 'slideOutRight 0.3s ease forwards';
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
-}
-
-// ── SEARCH ────────────────────────────────────────────────────────────────────
-searchInput.addEventListener('input', () => {
-  const q = searchInput.value.trim().toLowerCase();
-  if (!q) { searchResults.classList.remove('show'); return; }
-
-  const hits = SEARCH_INDEX.filter(item =>
-    item.code.toLowerCase().includes(q) ||
-    item.label.toLowerCase().includes(q) ||
-    item.path.toLowerCase().includes(q)
-  ).slice(0, 8);
-
-  if (hits.length === 0) {
-    searchResults.innerHTML = '<div class="search-no-result"><i class="fa-solid fa-magnifying-glass"></i> No results found</div>';
-  } else {
-    searchResults.innerHTML = hits.map(item => `
-      <div class="search-result-item" data-page="${item.page}">
-        <i class="fa-solid ${item.icon}"></i>
-        <span class="search-result-code">${item.code}</span>
-        <span style="color:var(--text-secondary); font-size:12px;">${item.label.replace(item.code + ' — ', '')}</span>
-        <span class="search-result-path">${item.path}</span>
-      </div>
-    `).join('');
-    searchResults.querySelectorAll('.search-result-item').forEach(el => {
-      el.addEventListener('click', () => {
-        navigateTo(el.dataset.page);
-        searchInput.value = '';
-        searchResults.classList.remove('show');
-      });
+  container.querySelectorAll('.delete-file-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      deleteFileById(btn.dataset.fileId, btn.dataset.filePath, btn.dataset.module, btn.dataset.category);
     });
+  });
+}
+
+async function deleteFileById(id, storagePath, moduleKey, category) {
+  if (!confirm('Delete this file? This cannot be undone.')) return;
+
+  if (!supabase.configured) {
+    showToast('Supabase not configured – cannot delete.', 'warning');
+    return;
   }
-  searchResults.classList.add('show');
-});
 
-searchInput.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { searchResults.classList.remove('show'); searchInput.blur(); }
-});
+  // Delete from storage
+  await supabase.deleteFile('training-files', storagePath);
 
-document.addEventListener('click', e => {
-  if (!e.target.closest('#searchWrap')) {
-    searchResults.classList.remove('show');
+  // Delete from database
+  const { error } = await supabase.query(`files?id=eq.${id}`, { method: 'DELETE' });
+  if (error) {
+    showToast('Failed to delete file record.', 'error');
+    return;
   }
-});
 
-// ── TOP NAV LINKS ─────────────────────────────────────────────────────────────
-document.querySelectorAll('[data-page]').forEach(el => {
-  el.addEventListener('click', e => {
+  // Invalidate cache
+  const cacheKey = `${moduleKey}:${category}`;
+  delete fileCache[cacheKey];
+
+  showToast('File deleted.', 'success');
+  loadFiles(moduleKey, category);
+}
+
+// ════════════════════════════════════════════════════
+// UPLOAD MODAL
+// ════════════════════════════════════════════════════
+function initUploadModal() {
+  const modal     = document.getElementById('upload-modal');
+  const closeBtn  = document.getElementById('modal-close-btn');
+  const cancelBtn = document.getElementById('cancel-upload-btn');
+  const uploadBtn = document.getElementById('confirm-upload-btn');
+  const dropZone  = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+
+  closeBtn.addEventListener('click',  closeUploadModal);
+  cancelBtn.addEventListener('click', closeUploadModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeUploadModal(); });
+
+  // File input change
+  fileInput.addEventListener('change', () => {
+    addToQueue([...fileInput.files]);
+    fileInput.value = '';
+  });
+
+  // Drop zone click → trigger file input
+  dropZone.addEventListener('click', () => fileInput.click());
+
+  // Drag events
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
     e.preventDefault();
-    const page = el.dataset.page;
-    if (page && SITE_MAP[page]) navigateTo(page);
+    dropZone.classList.remove('drag-over');
+    addToQueue([...e.dataTransfer.files]);
   });
-});
 
-// ── STAT COUNTER ANIMATION ────────────────────────────────────────────────────
-function animateCounters() {
-  document.querySelectorAll('.stat-number[data-target]').forEach(el => {
-    const target = parseInt(el.dataset.target, 10);
-    const duration = 1400;
-    const start = performance.now();
-    function tick(now) {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / duration, 1);
-      const ease = 1 - Math.pow(1 - progress, 3);
-      el.textContent = Math.round(ease * target);
-      if (progress < 1) requestAnimationFrame(tick);
+  uploadBtn.addEventListener('click', runUploads);
+}
+
+function openUploadModal(moduleKey, category) {
+  uploadContext = { module: moduleKey, category };
+  uploadQueue   = [];
+  document.getElementById('file-queue').innerHTML = '';
+  document.getElementById('upload-modal').classList.add('open');
+  const cat = CATEGORIES.find(c => c.key === category);
+  document.getElementById('modal-title').textContent =
+    `Upload – ${MODULES[moduleKey]?.label || moduleKey} › ${cat?.label || category}`;
+}
+
+function closeUploadModal() {
+  document.getElementById('upload-modal').classList.remove('open');
+  uploadQueue = [];
+  document.getElementById('file-queue').innerHTML = '';
+}
+
+function addToQueue(files) {
+  const MAX = 50 * 1024 * 1024; // 50 MB
+  files.forEach(file => {
+    if (file.size > MAX) {
+      showToast(`"${file.name}" exceeds 50 MB and was skipped.`, 'warning');
+      return;
     }
-    requestAnimationFrame(tick);
+    const id = 'q-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+    uploadQueue.push({ file, id });
+    renderQueueItem({ file, id });
   });
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
-function init() {
-  // Default breadcrumb for dashboard
-  renderBreadcrumb([{ label: 'Dashboard', page: 'dashboard' }]);
+function renderQueueItem({ file, id }) {
+  const queue = document.getElementById('file-queue');
+  const div = document.createElement('div');
+  div.className = 'queue-item';
+  div.id = id;
+  div.innerHTML = `
+    <div class="file-icon ${getExtClass(file.name)}" style="width:28px;height:28px;font-size:9px">${getExtLabel(file.name)}</div>
+    <div style="flex:1;min-width:0">
+      <div class="queue-item-name">${escHtml(file.name)}</div>
+      <div class="queue-item-size">${formatSize(file.size)}</div>
+    </div>
+    <button class="queue-item-remove" data-queue-id="${id}" title="Remove">
+      <i data-lucide="x"></i>
+    </button>
+  `;
+  div.querySelector('.queue-item-remove').addEventListener('click', () => {
+    uploadQueue = uploadQueue.filter(q => q.id !== id);
+    div.remove();
+  });
+  queue.appendChild(div);
+  lucide.createIcons();
+}
 
-  // Animate stats on load
-  setTimeout(animateCounters, 300);
-
-  // Mobile: start with sidebar closed
-  if (mobileWidth) {
-    // sidebar starts hidden via CSS
+async function runUploads() {
+  if (uploadQueue.length === 0) {
+    showToast('No files selected.', 'warning');
+    return;
+  }
+  if (!supabase.configured) {
+    showToast('Supabase is not configured. Files cannot be saved permanently. See script.js for setup.', 'warning');
+    return;
   }
 
-  // Open maintenance tree by default for discoverability
-  ['maintenance', 'eei', 'epc'].forEach(key => {
-    const el = document.getElementById(key);
-    const lbl = document.querySelector(`.tree-parent[data-key="${key}"]`);
-    if (el && lbl) { el.classList.add('open'); lbl.classList.add('open'); }
+  document.getElementById('confirm-upload-btn').disabled = true;
+  document.getElementById('confirm-upload-btn').textContent = 'Uploading…';
+
+  let successCount = 0;
+
+  for (const { file, id } of uploadQueue) {
+    const itemEl = document.getElementById(id);
+    if (!itemEl) continue;
+
+    // Add progress bar
+    const progressDiv = document.createElement('div');
+    progressDiv.innerHTML = `<div class="queue-item-progress"><div class="queue-item-bar" id="bar-${id}" style="width:0%"></div></div>
+      <div class="queue-item-status uploading" id="status-${id}">Uploading…</div>`;
+    itemEl.appendChild(progressDiv);
+
+    const storagePath = `${uploadContext.module}/${uploadContext.category}/${Date.now()}-${file.name}`;
+
+    // Upload to storage
+    const { data: storageData, error: storageErr } = await supabase.uploadFile('training-files', storagePath, file);
+    const barEl    = document.getElementById(`bar-${id}`);
+    const statusEl = document.getElementById(`status-${id}`);
+
+    if (storageErr) {
+      if (barEl) barEl.style.background = 'var(--c-error)';
+      if (statusEl) { statusEl.textContent = 'Upload failed'; statusEl.className = 'queue-item-status error'; }
+      continue;
+    }
+
+    if (barEl) barEl.style.width = '70%';
+
+    const publicUrl = supabase.getPublicUrl('training-files', storagePath);
+
+    // Insert metadata into database
+    const { error: dbErr } = await supabase.query('files', {
+      method: 'POST',
+      body: JSON.stringify({
+        module:   uploadContext.module,
+        category: uploadContext.category,
+        name:     file.name,
+        path:     storagePath,
+        size:     file.size,
+        type:     file.type,
+        url:      publicUrl,
+      }),
+    });
+
+    if (dbErr) {
+      if (statusEl) { statusEl.textContent = 'DB error – file uploaded but not recorded'; statusEl.className = 'queue-item-status error'; }
+      continue;
+    }
+
+    if (barEl) barEl.style.width = '100%';
+    if (statusEl) { statusEl.textContent = 'Done'; statusEl.className = 'queue-item-status done'; }
+    successCount++;
+  }
+
+  // Invalidate cache and reload
+  const cacheKey = `${uploadContext.module}:${uploadContext.category}`;
+  delete fileCache[cacheKey];
+
+  document.getElementById('confirm-upload-btn').disabled = false;
+  document.getElementById('confirm-upload-btn').textContent = 'Upload Files';
+
+  showToast(
+    `${successCount} of ${uploadQueue.length} file(s) uploaded successfully.`,
+    successCount === uploadQueue.length ? 'success' : 'warning'
+  );
+
+  // Close after short delay and refresh
+  setTimeout(() => {
+    closeUploadModal();
+    if (currentModule === uploadContext.module && currentCategory === uploadContext.category) {
+      loadFiles(currentModule, currentCategory);
+    }
+  }, 1200);
+}
+
+// ════════════════════════════════════════════════════
+// GLOBAL SEARCH
+// ════════════════════════════════════════════════════
+function initSearch() {
+  const input    = document.getElementById('global-search');
+  const dropdown = document.getElementById('search-results');
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    if (!q) { dropdown.classList.remove('visible'); return; }
+
+    const results = Object.entries(MODULES)
+      .filter(([key, mod]) =>
+        key !== 'home' &&
+        (mod.label.toLowerCase().includes(q) ||
+         mod.path.join(' ').toLowerCase().includes(q) ||
+         (mod.desc || '').toLowerCase().includes(q))
+      )
+      .slice(0, 8);
+
+    if (results.length === 0) {
+      dropdown.innerHTML = `<div class="search-result-item" style="color:var(--c-text-3)">No results found</div>`;
+    } else {
+      dropdown.innerHTML = results.map(([key, mod]) => `
+        <div class="search-result-item" data-nav="${key}">
+          <i data-lucide="search"></i>
+          <span>${escHtml(mod.label)}</span>
+          <span class="search-result-path">${mod.path.slice(1).join(' › ')}</span>
+        </div>
+      `).join('');
+      lucide.createIcons();
+
+      dropdown.querySelectorAll('[data-nav]').forEach(el => {
+        el.addEventListener('click', () => {
+          navigateTo(el.dataset.nav);
+          input.value = '';
+          dropdown.classList.remove('visible');
+        });
+      });
+    }
+
+    dropdown.classList.add('visible');
+  });
+
+  document.addEventListener('click', e => {
+    if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+      dropdown.classList.remove('visible');
+    }
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { dropdown.classList.remove('visible'); input.blur(); }
   });
 }
 
-init();
+// ════════════════════════════════════════════════════
+// TOAST NOTIFICATIONS
+// ════════════════════════════════════════════════════
+function showToast(message, type = 'info', duration = 4000) {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = message;
+  container.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 320); }, duration);
+}
+
+// ════════════════════════════════════════════════════
+// UTILITY HELPERS
+// ════════════════════════════════════════════════════
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatSize(bytes) {
+  if (!bytes) return '—';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  try {
+    return new Date(iso).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+  } catch { return iso; }
+}
+
+function getExt(filename) {
+  return (filename || '').split('.').pop().toLowerCase();
+}
+
+function getExtLabel(filename) {
+  const ext = getExt(filename);
+  return ext.toUpperCase().slice(0, 4);
+}
+
+function getExtClass(filename) {
+  const ext = getExt(filename);
+  if (ext === 'pdf') return 'pdf';
+  if (ext === 'ppt' || ext === 'pptx') return 'ppt';
+  if (ext === 'doc' || ext === 'docx') return 'doc';
+  if (ext === 'xls' || ext === 'xlsx') return 'xls';
+  return 'default';
+}
